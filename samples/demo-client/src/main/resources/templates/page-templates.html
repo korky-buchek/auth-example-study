@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Spring Authorization Server sample</title>
+    <link rel="stylesheet" href="/webjars/bootstrap/css/bootstrap.css" th:href="@{/webjars/bootstrap/css/bootstrap.css}" />
+</head>
+<body>
+<nav th:fragment="navbar" class="navbar navbar-expand-lg bg-light">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">
+            <img src="/assets/img/spring-security.svg" th:src="@{/assets/img/spring-security.svg}" width="40" height="32">
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="/" th:href="@{/}">Home</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Authorize</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/authorize?grant_type=authorization_code" th:href="@{/authorize?grant_type=authorization_code}">Authorization Code</a></li>
+                        <li><a class="dropdown-item" href="/authorize?grant_type=client_credentials" th:href="@{/authorize?grant_type=client_credentials}">Client Credentials</a></li>
+                        <li><a class="dropdown-item" href="/authorize?grant_type=device_code" th:href="@{/authorize?grant_type=device_code}">Device Code</a></li>
+                    </ul>
+                </li>
+            </ul>
+            <div>
+                <strong th:text="${userName}"/>
+                <span th:if="${isAdmin}">(admin)</span>
+            </div>
+            <form class="d-flex" th:action="@{/logout}" method="post">
+                <button class="btn btn-outline-dark" type="submit">Logout</button>
+            </form>
+        </div>
+    </div>
+</nav>
+<div class="container">
+    <div th:fragment="error-message" th:if="${error}" class="row py-5 justify-content-center">
+        <div class="col alert alert-danger alert-dismissible fade show" role="alert">
+            <strong th:text="${error}"></strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+    <div th:fragment="message-list" th:if="${messages}" class="row py-5 justify-content-start">
+        <div class="col">
+            <table class="table table-striped caption-top">
+                <caption>Messages</caption>
+                <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Message</th>
+                    <th scope="col" th:if="${isAdmin}">id</th>
+                    <th scope="col" th:if="${isAdmin}">X</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="message,iterStat : ${messages}">
+                    <td scope="row" th:text="${iterStat.count}"></td>
+                    <td th:text="${message.value}"></td>
+                    <td th:if="${isAdmin}" th:text="${message.key}"></td>
+                    <td th:if="${isAdmin}">
+                        <form class="message-form" th:action="@{/messages/remove}" method="get">
+                            <input type="hidden" name="uuid" th:value="${message.key}"/>
+                            <button class="btn btn-danger" type="submit">x</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="col">
+            <form class="message-form" th:action="@{/messages/add}" method="get">
+                <input class="form-text" name="message" type="text"/>
+                <button class="btn btn-danger" type="submit">ADD</button>
+            </form>
+        </div>
+        <script>
+            document.addEventListener("DOMContentLoaded", (e) => {
+                document.querySelectorAll(".message-form").forEach(form => form.addEventListener("submit", (evt) => {
+                    evt.preventDefault();
+                    let val = form.querySelector("input")?.value;
+                    let name = form.querySelector("input")?.name;
+                    let params = (new URL(document.location)).searchParams;
+                    let grantType = params.get("grant_type");
+                    fetch(`${form.action}?grant_type=${grantType}&${name}=${val}`, {
+                        method: "GET",
+                    }).then(response => {if(response.ok) location.reload();})
+                }))
+            });
+        </script>
+    </div>
+</div>
+<script src="/webjars/bootstrap/js/bootstrap.bundle.min.js" th:src="@{/webjars/bootstrap/js/bootstrap.bundle.min.js}"></script>
+<script src="/webjars/jquery/jquery.min.js" th:src="@{/webjars/jquery/jquery.min.js}"></script>
+<script src="/webjars/popper.js/umd/popper.js" th:src="@{/webjars/popper.js/umd/popper.js}"></script>
+</body>
+</html>
